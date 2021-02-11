@@ -13,6 +13,7 @@ class User(AbstractUser):
   def save(self, *args, **kwargs):
     if not self.name:
       self.name = self.username
+    self.set_password(self.password)
     super().save(*args, **kwargs)
 
 class Profile(models.Model):
