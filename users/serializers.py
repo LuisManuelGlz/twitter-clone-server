@@ -74,3 +74,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+class ProfileFollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['followers_total']
+        read_only_fields = ['followers_total']

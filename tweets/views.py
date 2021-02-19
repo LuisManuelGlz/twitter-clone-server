@@ -10,8 +10,8 @@ class TweetList(generics.ListCreateAPIView):
 
   def post(self, request, *args, **kwargs):
     serializer = TweetSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)  # Trigger Bad Request if errors exist
-    serializer.save(user=request.user)         # Passing the current user
+    serializer.is_valid(raise_exception=True)
+    serializer.save(user=request.user)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class TweetDetail(generics.RetrieveDestroyAPIView):

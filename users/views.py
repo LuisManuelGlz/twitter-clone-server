@@ -1,7 +1,7 @@
-# from django.contrib.auth.models import User
-from .models import User
-from .serializers import UserSerializer, UserCreateSerializer
-from rest_framework import generics
+from .models import User, Profile
+from .serializers import UserSerializer, UserCreateSerializer, ProfileFollowSerializer
+from rest_framework import generics, status, permissions
+from rest_framework.response import Response
 
 
 class UserCreate(generics.CreateAPIView):
@@ -13,3 +13,36 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+
+
+class ProfileFollow(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Profile.objects.all()
+    serializer_class = ProfileFollowSerializer
+    lookup_field = 'user_id'
+
+    def put(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id') # get lookup_field
+
+        follower_profile = Profile.objects.get(user=request.user)
+        followed_profile = Profile.objects.get(pk=user_id)
+
+        # check if followed profile exists in follower profile
+        if follower_profile.following.filter(pk=user_id).exists():
+            follower_profile.following_total -= 1;
+            follower_profile.following.remove(followed_profile)
+
+            followed_profile.followers_total -= 1;
+            followed_profile.followers.remove(follower_profile)
+        else:
+            follower_profile.following_total += 1;
+            follower_profile.following.add(followed_profile)
+
+            followed_profile.followers_total += 1;
+            followed_profile.followers.add(follower_profile)
+
+        follower_profile.save()
+        followed_profile.save()
+
+        serializer = ProfileFollowSerializer(followed_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)

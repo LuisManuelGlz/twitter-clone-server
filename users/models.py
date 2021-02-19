@@ -65,6 +65,15 @@ class Profile(models.Model):
     bio = models.TextField(max_length=160, blank=True, null=True)
     website = models.URLField(max_length=100, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
+    following = models.ManyToManyField(
+        'self', blank=True, related_name='profile_following', symmetrical=False)
+    following_total = models.IntegerField(default=0)
+    followers = models.ManyToManyField(
+        'self', blank=True, related_name='profile_followers', symmetrical=False)
+    followers_total = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username} profile"
 
 
 @receiver(post_save, sender=User)
