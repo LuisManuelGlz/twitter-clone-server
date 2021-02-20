@@ -3,7 +3,18 @@ from rest_framework import serializers
 from .models import User, Profile
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class UserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'name',
+            'username',
+            'date_joined'
+        ]
+
+
+class ProfileSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
@@ -11,12 +22,71 @@ class ProfileSerializer(serializers.ModelSerializer):
             'location',
             'bio',
             'website',
-            'birth_date'
+            'following_total',
+            'followers_total',
+            'birth_date',
+        ]
+        read_only_fields = ['following_total', 'followers_total']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSimpleSerializer()
+
+    class Meta:
+        model = Profile
+        fields = [
+            'avatar',
+            'location',
+            'bio',
+            'website',
+            'following_total',
+            'followers_total',
+            'birth_date',
+            'user'
         ]
 
 
+class ProfileFollowingSerializer(serializers.ModelSerializer):
+    following = ProfileSerializer(many=True)
+
+    class Meta:
+        model = Profile
+        fields = ['following']
+
+
+class ProfileFollowersSerializer(serializers.ModelSerializer):
+    followers = ProfileSerializer(many=True)
+
+    class Meta:
+        model = Profile
+        fields = ['followers']
+
+
+class ProfileFollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['followers_total']
+        read_only_fields = ['followers_total']
+
+
+class FollowingSerializer(serializers.ModelSerializer):
+    profile = ProfileFollowingSerializer()
+
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'username', 'profile']
+
+
+class FollowersSerializer(serializers.ModelSerializer):
+    profile = ProfileFollowersSerializer()
+
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'username', 'profile']
+
+
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
+    profile = ProfileSimpleSerializer()
 
     class Meta:
         model = User
@@ -74,10 +144,3 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-
-
-class ProfileFollowSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ['followers_total']
-        read_only_fields = ['followers_total']
