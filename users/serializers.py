@@ -1,5 +1,5 @@
 from rest_framework import serializers
-# from django.contrib.auth.models import User
+import cloudinary.uploader
 from .models import User, Profile
 
 
@@ -15,10 +15,13 @@ class UserSimpleSerializer(serializers.ModelSerializer):
 
 
 class ProfileSimpleSerializer(serializers.ModelSerializer):
+    upload_avatar = serializers.ImageField(write_only=True, required=False)
+
     class Meta:
         model = Profile
         fields = [
             'avatar',
+            'upload_avatar',
             'location',
             'bio',
             'website',
@@ -26,7 +29,7 @@ class ProfileSimpleSerializer(serializers.ModelSerializer):
             'followers_total',
             'birth_date',
         ]
-        read_only_fields = ['following_total', 'followers_total']
+        read_only_fields = ['avatar', 'following_total', 'followers_total']
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -105,6 +108,16 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.name = validated_data.get('name', instance.name)
         instance.save()
+
+        avatar = profile_data.get('upload_avatar')
+
+        # if avatar is in profile data
+        if avatar:
+            cloudinary_folder = f'twitter_clone/users/{profile.user.id}/avatar'
+            upload_data = cloudinary.uploader.upload(
+                avatar, folder=cloudinary_folder)
+            avatar_url = upload_data.get('url')
+            profile.avatar = avatar_url
 
         profile.location = profile_data.get('location', profile.location)
         profile.bio = profile_data.get('bio', profile.bio)
